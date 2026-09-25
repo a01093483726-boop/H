@@ -1,0 +1,37 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local UserInputService = game:GetService("UserInputService")
+
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+
+-- 키보드 'E' 키를 누르면 내 시점(조준점)에 있는 벽 1개를 제거
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.KeyCode == Enum.KeyCode.E then
+        -- 카메라 중심점(화면 중앙/조준점)에서 광선(Ray) 발사
+        local unitRay = Camera:ViewportPointToRay(Camera.Viewport.X / 2, Camera.Viewport.Y / 2)
+        
+        local raycastParams = RaycastParams.new()
+        raycastParams.FilterGroup = nil
+        raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+        -- 내 캐릭터는 조준 대상에서 제외
+        if LocalPlayer.Character then
+            raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+        end
+        
+        -- 최대 500 스터드 거리까지 감지
+        local raycastResult = Workspace:Raycast(unitRay.Origin, unitRay.Direction * 500, raycastParams)
+        
+        if raycastResult and raycastResult.Instance then
+            local hitPart = raycastResult.Instance
+            
+            -- 베이스판이나 지형이 아닌 일반 Part인 경우에만 삭제
+            if hitPart:IsA("BasePart") and hitPart.Name ~= "Baseplate" and hitPart.Name ~= "Terrain" then
+                hitPart:Destroy()
+                print("벽(Part) 제거 완료: " .. hitPart.Name)
+            end
+        end
+    end
+end)
